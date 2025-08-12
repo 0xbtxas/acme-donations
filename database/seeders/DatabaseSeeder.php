@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use App\Models\Tenant;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
@@ -14,6 +15,7 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        $tenant = Tenant::firstOrCreate(['slug' => 'acme'], ['name' => 'ACME Corp']);
         $permissions = [
             'campaign.viewAny',
             'campaign.viewAll',
@@ -41,12 +43,14 @@ class DatabaseSeeder extends Seeder
         $admin = User::factory()->create([
             'name' => 'Admin User',
             'email' => 'admin@example.com',
+            'tenant_id' => $tenant->id,
         ]);
         $admin->assignRole('admin');
 
         $employee = User::factory()->create([
             'name' => 'Employee User',
             'email' => 'employee@example.com',
+            'tenant_id' => $tenant->id,
         ]);
         $employee->assignRole('employee');
     }

@@ -8,6 +8,12 @@ export const routes = [
         component: () => import("../views/Home.vue"),
     },
     {
+        path: "/payment-methods",
+        name: "payment.methods",
+        meta: { requiresAuth: true },
+        component: () => import("../views/PaymentMethods.vue"),
+    },
+    {
         path: "/campaigns",
         name: "campaigns",
         meta: { requiresAuth: true },

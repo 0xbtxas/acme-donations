@@ -40,6 +40,16 @@ class CampaignPolicy
     {
         return $user->can('campaign.publish');
     }
+
+    public function cancel(User $user, Campaign $campaign): bool
+    {
+        return $campaign->owner_id === $user->id || $user->can('campaign.update');
+    }
+
+    public function close(User $user, Campaign $campaign): bool
+    {
+        return $campaign->owner_id === $user->id || $user->can('campaign.update');
+    }
 }
 
 

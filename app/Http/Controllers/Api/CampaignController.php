@@ -16,7 +16,14 @@ class CampaignController extends Controller
         $this->authorize('viewAny', Campaign::class);
 
         $user = $request->user();
-        $query = Campaign::query()->with('owner')->withCount('donations');
+        $query = Campaign::query()
+            ->with('owner')
+            ->withCount('donations')
+            ->withSum([
+                'donations as amount_raised' => function ($q) {
+                    $q->where('status', 'confirmed');
+                }
+            ], 'amount');
 
         if (!$user->can('campaign.viewAll')) {
             $query->where(function ($q) use ($user) {
@@ -34,7 +41,32 @@ class CampaignController extends Controller
             $query->where('status', $status);
         }
 
-        return CampaignResource::collection($query->orderByDesc('id')->paginate(15));
+        if ($request->filled('min_goal')) {
+            $query->where('goal_amount', '>=', (float) $request->query('min_goal'));
+        }
+        if ($request->filled('max_goal')) {
+            $query->where('goal_amount', '<=', (float) $request->query('max_goal'));
+        }
+        if ($request->filled('deadline_before')) {
+            $query->where('deadline', '<=', $request->query('deadline_before'));
+        }
+        if ($request->filled('deadline_after')) {
+            $query->where('deadline', '>=', $request->query('deadline_after'));
+        }
+
+        $sort = (string) $request->query('sort', '-id');
+        $allowed = [
+            'id' => 'id',
+            'created_at' => 'created_at',
+            'deadline' => 'deadline',
+            'goal_amount' => 'goal_amount',
+            'amount_raised' => 'amount_raised',
+        ];
+        $direction = str_starts_with($sort, '-') ? 'desc' : 'asc';
+        $columnKey = ltrim($sort, '-');
+        $column = $allowed[$columnKey] ?? 'id';
+
+        return CampaignResource::collection($query->orderBy($column, $direction)->paginate(15));
     }
 
     public function store(CampaignStoreRequest $request)

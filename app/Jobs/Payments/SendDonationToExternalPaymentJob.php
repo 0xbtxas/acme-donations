@@ -26,25 +26,38 @@ class SendDonationToExternalPaymentJob implements ShouldQueue
             return;
         }
 
+        // Reload donation and related models without tenant scope to ensure availability in jobs
+        $donation = Donation::withoutGlobalScopes()->with([
+            'campaign' => function ($q) {
+                $q->withoutGlobalScopes();
+            },
+            'user',
+        ])->find($this->donation->id);
+
+        if (!$donation || !$donation->campaign || !$donation->user) {
+            $this->donation->update(['status' => 'failed']);
+            return;
+        }
+
         $payload = [
-            'amount' => (float) $this->donation->amount,
-            'currency' => $this->donation->currency,
-            'donation_id' => $this->donation->id,
-            'campaign' => $this->donation->campaign->title,
-            'user_email' => $this->donation->user->email,
+            'amount' => (float) $donation->amount,
+            'currency' => $donation->currency,
+            'donation_id' => $donation->id,
+            'campaign' => $donation->campaign->title,
+            'user_email' => $donation->user->email,
         ];
 
         // Placeholder external call. Replace BASE_URL via config.
-        $response = Http::timeout(10)->post(config('services.payments.base_url') . '/donations', $payload);
+        $response = Http::timeout(10)
+            ->retry(2, 500)
+            ->post(rtrim(config('services.payments.base_url'), '/') . '/donations', $payload);
 
         if ($response->successful()) {
-            $this->donation->update([
-                'status' => 'completed',
+            $donation->update([
                 'external_reference' => (string) ($response->json('reference') ?? ''),
             ]);
-            $this->donation->user->notify(new DonationCompleted($this->donation->fresh(['campaign', 'user'])));
         } else {
-            $this->donation->update(['status' => 'failed']);
+            $donation->update(['status' => 'failed']);
         }
     }
 }

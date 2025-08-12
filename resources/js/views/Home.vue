@@ -4,6 +4,11 @@
         <RouterLink to="/campaigns" class="underline"
             >Browse Campaigns</RouterLink
         >
+        <div class="mt-3">
+            <RouterLink to="/payment-methods" class="underline"
+                >Manage Payment Methods</RouterLink
+            >
+        </div>
     </div>
 </template>
 

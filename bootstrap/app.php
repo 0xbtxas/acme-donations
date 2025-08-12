@@ -16,6 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
             'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
         ]);
+        $middleware->append(\App\Http\Middleware\SetTenant::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

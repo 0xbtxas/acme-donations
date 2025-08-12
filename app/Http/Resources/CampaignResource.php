@@ -20,7 +20,9 @@ class CampaignResource extends JsonResource
             'title' => $this->title,
             'description' => $this->description,
             'goal_amount' => (float) $this->goal_amount,
+            'goal_amount_cents' => $this->goal_amount_cents ? (int) $this->goal_amount_cents : null,
             'currency' => $this->currency,
+            'deadline' => $this->deadline,
             'status' => $this->status,
             'owner' => [
                 'id' => $this->owner->id,

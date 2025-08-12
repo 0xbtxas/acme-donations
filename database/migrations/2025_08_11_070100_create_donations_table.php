@@ -9,14 +9,19 @@ return new class extends Migration {
     {
         Schema::create('donations', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
-            $table->foreignId('campaign_id')->constrained('campaigns')->cascadeOnDelete();
-            $table->decimal('amount', 12, 2);
+            $table->foreignId('tenant_id')->nullable()->constrained('tenants')->nullOnDelete();
+            $table->foreignId('campaign_id')->nullable()->constrained('campaigns')->nullOnDelete();
+            $table->foreignId('donor_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->bigInteger('amount_cents')->nullable();
             $table->string('currency', 3)->default('USD');
-            $table->enum('status', ['pending', 'completed', 'failed'])->default('pending');
-            $table->string('external_reference')->nullable();
+            $table->enum('status', ['pending', 'confirmed', 'failed', 'refunded'])->default('pending');
+            $table->string('payment_provider')->nullable();
+            $table->string('payment_provider_session_id')->nullable()->unique();
+            $table->string('provider_transaction_id')->nullable();
+            $table->timestamp('refunded_at')->nullable();
             $table->timestamps();
-            $table->index(['campaign_id', 'status']);
+            $table->index(['tenant_id', 'campaign_id']);
+            $table->index(['tenant_id', 'donor_id']);
         });
     }
 
@@ -25,5 +30,3 @@ return new class extends Migration {
         Schema::dropIfExists('donations');
     }
 };
-
-

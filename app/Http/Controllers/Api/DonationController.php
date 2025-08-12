@@ -29,11 +29,21 @@ class DonationController extends Controller
             'campaign_id' => (int) $request->validated('campaign_id'),
             'amount' => (float) $request->validated('amount'),
             'currency' => $request->validated('currency'),
+            'payment_method_id' => $request->validated('payment_method_id') ? (int) $request->validated('payment_method_id') : null,
         ]);
 
         $this->payments->processAsync($donation);
 
+        // In synchronous queues or fake gateways, processing may have completed; refresh to reflect final status
+        $donation->refresh();
+
         return (new DonationResource($donation->load(['campaign', 'user'])))->response()->setStatusCode(201);
+    }
+
+    public function show(Donation $donation)
+    {
+        $this->authorize('view', $donation);
+        return new DonationResource($donation->load(['campaign', 'user']));
     }
 }
 

@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use App\Models\Campaign;
+use App\Models\PaymentMethod;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
@@ -22,10 +23,18 @@ class DonationsApiTest extends TestCase
         $employee = User::where('email', 'employee@example.com')->firstOrFail();
         Sanctum::actingAs($employee);
         $campaign = Campaign::factory()->for($employee, 'owner')->create();
+        $pm = PaymentMethod::create([
+            'user_id' => $employee->id,
+            'provider' => 'stripe',
+            'provider_method_id' => 'pm_test_123',
+            'label' => 'Test Card',
+            'is_default' => true,
+        ]);
         $this->postJson('/api/donations', [
             'campaign_id' => $campaign->id,
             'amount' => 10,
             'currency' => 'USD',
+            'payment_method_id' => $pm->id,
         ])->assertCreated()->assertJsonStructure(['data' => ['id', 'status']]);
     }
 }

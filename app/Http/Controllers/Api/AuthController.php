@@ -51,6 +51,9 @@ class AuthController extends Controller
 
         $token = $user->createToken('auth')->plainTextToken;
 
+        // Load the user with tenant information
+        $user->load('tenant');
+
         return response()->json(['token' => $token, 'user' => $user]);
     }
 
@@ -68,7 +71,7 @@ class AuthController extends Controller
         }
 
         /** @var User $user */
-        $user = User::where('email', $credentials['email'])->firstOrFail();
+        $user = User::with('tenant')->where('email', $credentials['email'])->firstOrFail();
         $token = $user->createToken('auth')->plainTextToken;
 
         return response()->json(['token' => $token, 'user' => $user]);

@@ -63,7 +63,7 @@ const submit = async () => {
         authStore.setAuth({
             token: data.token,
             user: data.user,
-            tenant: data.user.tenant?.subdomain || data.user.tenant_id || null,
+            tenant: data.user.tenant,
         });
 
         toast.add({

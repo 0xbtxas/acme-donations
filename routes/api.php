@@ -29,6 +29,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     Route::get('payment-methods', [PaymentMethodController::class, 'index']);
     Route::post('payment-methods', [PaymentMethodController::class, 'store']);
+    Route::post('payment-methods/setup-intent', [PaymentMethodController::class, 'createSetupIntent']);
 });
 
 // Payment provider webhooks (no auth, secured by secret)

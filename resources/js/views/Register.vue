@@ -113,18 +113,11 @@ const submit = async () => {
         const { data } = await axios.post("/api/auth/register", payload);
 
         // Set authentication state using Pinia store
-        const tenantSubdomain =
-            mode.value === "join"
-                ? tenantOptions.value
-                      .find((o) => o.value === tenantId.value)
-                      ?.label?.split(" (")[1]
-                      ?.replace(")", "") || ""
-                : tenantSub.value;
-
+        // The backend now returns the user with tenant information loaded
         authStore.setAuth({
             token: data.token,
             user: data.user,
-            tenant: tenantSubdomain,
+            tenant: data.user.tenant,
         });
 
         toast.add({

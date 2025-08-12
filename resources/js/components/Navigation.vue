@@ -31,7 +31,7 @@
                 <div class="flex items-center space-x-4">
                     <div class="text-sm text-gray-500">
                         <span class="font-medium">{{
-                            authStore.getTenant || "Unknown"
+                            authStore.getTenantDisplayName
                         }}</span>
                     </div>
                     <div

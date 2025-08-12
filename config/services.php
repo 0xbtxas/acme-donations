@@ -39,4 +39,10 @@ return [
         'base_url' => env('PAYMENTS_BASE_URL', 'https://example-payments.local'),
     ],
 
+    'stripe' => [
+        'key' => env('STRIPE_KEY'),
+        'secret' => env('STRIPE_SECRET'),
+        'webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),
+    ],
+
 ];

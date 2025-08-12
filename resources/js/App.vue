@@ -1,6 +1,8 @@
 <template>
+    <Navigation />
     <router-view />
-    <UNotifications />
 </template>
 
-<script setup></script>
+<script setup>
+import Navigation from "./components/Navigation.vue";
+</script>

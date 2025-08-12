@@ -1,12 +1,16 @@
 import "./bootstrap";
 
 import { createApp } from "vue";
+import { createPinia } from "pinia";
 // import { createHead } from "@vueuse/head";
 import ui from "@nuxt/ui/vue-plugin";
 import App from "./App.vue";
 import router from "./routes";
 
 const app = createApp(App);
+const pinia = createPinia();
+
+app.use(pinia);
 app.use(router);
 // app.use(createHead());
 app.use(ui);

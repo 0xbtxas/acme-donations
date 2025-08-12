@@ -12,25 +12,30 @@ class SetTenant
     public function handle(Request $request, Closure $next): Response
     {
         $host = $request->getHost();
-        $slug = $request->header('X-Tenant') ?: $request->route('tenant') ?: null;
+        $headerId = $request->header('X-Tenant-ID');
+        $headerSub = $request->header('X-Tenant');
+        $tenant = null;
 
-        if (!$slug) {
-            // basic host-based mapping: {slug}.example.com
-            $parts = explode('.', $host);
-            if (count($parts) > 2) {
-                $slug = $parts[0];
+        if ($headerId && is_numeric($headerId)) {
+            $tenant = Tenant::find((int) $headerId);
+        }
+
+        if (!$tenant) {
+            $subdomain = $headerSub ?: null;
+            if (!$subdomain) {
+                $parts = explode('.', $host);
+                if (count($parts) > 2) {
+                    $subdomain = $parts[0];
+                }
+            }
+            if ($subdomain) {
+                $tenant = Tenant::where('subdomain', $subdomain)->first();
             }
         }
 
-        if ($slug) {
-            $tenant = Tenant::where('slug', $slug)->first();
-            if ($tenant) {
-                app()->instance(Tenant::class, $tenant);
-                // scope models
-                Tenant::unguarded(function () use ($tenant) {
-                    config(['app.tenant_id' => $tenant->id]);
-                });
-            }
+        if ($tenant) {
+            app()->instance(Tenant::class, $tenant);
+            config(['app.tenant_id' => $tenant->id]);
         }
 
         return $next($request);

@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from "vue-router";
+import { useAuthStore } from "../stores/auth";
 
 export const routes = [
     {
@@ -45,6 +46,12 @@ export const routes = [
         meta: { guestOnly: true },
         component: () => import("../views/Login.vue"),
     },
+    {
+        path: "/register",
+        name: "register",
+        meta: { guestOnly: true },
+        component: () => import("../views/Register.vue"),
+    },
 ];
 
 const router = createRouter({
@@ -53,11 +60,13 @@ const router = createRouter({
 });
 
 router.beforeEach((to) => {
-    const token = localStorage.getItem("token");
-    if (to.meta?.requiresAuth && !token) {
+    const authStore = useAuthStore();
+    const isAuthenticated = authStore.getIsAuthenticated;
+
+    if (to.meta?.requiresAuth && !isAuthenticated) {
         return { name: "login", query: { redirect: to.fullPath } };
     }
-    if (to.meta?.guestOnly && token) {
+    if (to.meta?.guestOnly && isAuthenticated) {
         return { name: "home" };
     }
 });

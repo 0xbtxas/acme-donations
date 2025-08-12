@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\CampaignController;
 use App\Http\Controllers\Api\DonationController;
 use App\Http\Controllers\Api\PaymentMethodController;
 use App\Http\Controllers\Api\WebhookController;
+use App\Http\Controllers\Api\TenantController;
 
 Route::prefix('auth')->group(function () {
     Route::post('login', [AuthController::class, 'login']);
@@ -13,6 +14,8 @@ Route::prefix('auth')->group(function () {
     Route::post('logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
     Route::get('me', [AuthController::class, 'me'])->middleware('auth:sanctum');
 });
+
+Route::get('tenants', [TenantController::class, 'index']);
 
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::apiResource('campaigns', CampaignController::class);

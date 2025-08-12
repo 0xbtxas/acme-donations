@@ -14,12 +14,20 @@ return new class extends Migration {
         $pivotPermission = $columnNames['permission_pivot_key'] ?? 'permission_id';
 
         // permissions
-        Schema::create($tableNames['permissions'], function (Blueprint $table) {
+        Schema::create($tableNames['permissions'], function (Blueprint $table) use ($teams, $columnNames) {
             $table->bigIncrements('id');
+            if ($teams) {
+                $table->unsignedBigInteger($columnNames['team_foreign_key'])->nullable();
+                $table->index($columnNames['team_foreign_key'], 'permissions_team_foreign_key_index');
+            }
             $table->string('name');
             $table->string('guard_name');
             $table->timestamps();
-            $table->unique(['name', 'guard_name']);
+            if ($teams) {
+                $table->unique([$columnNames['team_foreign_key'], 'name', 'guard_name']);
+            } else {
+                $table->unique(['name', 'guard_name']);
+            }
         });
 
         // roles (tenant scoped if teams enabled)
@@ -47,9 +55,10 @@ return new class extends Migration {
             $table->index([$columnNames['model_morph_key'], 'model_type'], 'model_has_permissions_model_id_model_type_index');
 
             if ($teams) {
-                $table->unsignedBigInteger($columnNames['team_foreign_key']);
+                $table->unsignedBigInteger($columnNames['team_foreign_key'])->nullable();
                 $table->index($columnNames['team_foreign_key'], 'model_has_permissions_team_foreign_key_index');
-                $table->primary([$columnNames['team_foreign_key'], $pivotPermission, $columnNames['model_morph_key'], 'model_type'], 'model_has_permissions_permission_model_type_primary');
+                // Use unique constraint instead of primary key to allow nullable tenant_id
+                $table->unique([$columnNames['team_foreign_key'], $pivotPermission, $columnNames['model_morph_key'], 'model_type'], 'model_has_permissions_permission_model_type_unique');
             } else {
                 $table->primary([$pivotPermission, $columnNames['model_morph_key'], 'model_type'], 'model_has_permissions_permission_model_type_primary');
             }
@@ -63,9 +72,10 @@ return new class extends Migration {
             $table->index([$columnNames['model_morph_key'], 'model_type'], 'model_has_roles_model_id_model_type_index');
 
             if ($teams) {
-                $table->unsignedBigInteger($columnNames['team_foreign_key']);
+                $table->unsignedBigInteger($columnNames['team_foreign_key'])->nullable();
                 $table->index($columnNames['team_foreign_key'], 'model_has_roles_team_foreign_key_index');
-                $table->primary([$columnNames['team_foreign_key'], $pivotRole, $columnNames['model_morph_key'], 'model_type'], 'model_has_roles_role_model_type_primary');
+                // Use unique constraint instead of primary key to allow nullable tenant_id
+                $table->unique([$columnNames['team_foreign_key'], $pivotRole, $columnNames['model_morph_key'], 'model_type'], 'model_has_roles_role_model_type_unique');
             } else {
                 $table->primary([$pivotRole, $columnNames['model_morph_key'], 'model_type'], 'model_has_roles_role_model_type_primary');
             }
@@ -77,6 +87,25 @@ return new class extends Migration {
             $table->foreignId($pivotRole)->constrained($tableNames['roles'])->cascadeOnDelete();
             $table->primary([$pivotPermission, $pivotRole], 'role_has_permissions_permission_id_role_id_primary');
         });
+
+        // Add foreign key constraints for tenant_id columns
+        if ($teams) {
+            Schema::table($tableNames['permissions'], function (Blueprint $table) use ($columnNames) {
+                $table->foreign($columnNames['team_foreign_key'])->references('id')->on('tenants')->nullOnDelete();
+            });
+            
+            Schema::table($tableNames['roles'], function (Blueprint $table) use ($columnNames) {
+                $table->foreign($columnNames['team_foreign_key'])->references('id')->on('tenants')->nullOnDelete();
+            });
+            
+            Schema::table($tableNames['model_has_permissions'], function (Blueprint $table) use ($columnNames) {
+                $table->foreign($columnNames['team_foreign_key'])->references('id')->on('tenants')->nullOnDelete();
+            });
+            
+            Schema::table($tableNames['model_has_roles'], function (Blueprint $table) use ($columnNames) {
+                $table->foreign($columnNames['team_foreign_key'])->references('id')->on('tenants')->nullOnDelete();
+            });
+        }
 
         app('cache')->forget('spatie.permission.cache');
     }
